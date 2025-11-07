@@ -26,11 +26,4 @@ CREATE TABLE IF NOT EXISTS public.impossible (
 
 CREATE INDEX IF NOT EXISTS idx_impossible_geom ON public.impossible USING GIST (polygon_geom);
 
--- 4. CSV 데이터 삽입
--- 파일 경로: /docker-entrypoint-initdb.d/data/address.csv
-\copy address (landlot_address, road_name_address, x, y)
-FROM '/docker-entrypoint-initdb.d/data/address.csv'
-WITH (FORMAT csv, HEADER true, DELIMITER ',');
 
--- 확인용 로그 (SELECT 실행은 불필요하지만 참고용)
--- SELECT COUNT(*) FROM public.address;

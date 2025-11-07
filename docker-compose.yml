@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgis/postgis:16-3.4
@@ -10,8 +12,44 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./db/init_db.sql:/docker-entrypoint-initdb.d/1_init_db.sql
-      - ./db/import_data.sql:/docker-entrypoint-initdb.d/2_import_data.sql
-      - ./db/data/:/docker-entrypoint-initdb.d/data/
+      - ./db/db/init_db.sql:/docker-entrypoint-initdb.d/1_init_db.sql
+      - ./db/db/import_data.sql:/docker-entrypoint-initdb.d/2_import_data.sql
+      - ./db/db/data/:/docker-entrypoint-initdb.d/data/
     networks:
-      
+      - app_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tobacco_backend
+    restart: always
+    command: >
+      sh -c "sleep 10 && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://Team_ten:1234@db:5432/tabaco_retail
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./db/db/data/:/app/data/
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
+    container_name: tobacco_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "8080:5000"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

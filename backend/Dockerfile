@@ -18,7 +18,9 @@ WORKDIR /app
 
 # requirements.txt 복사 및 의존성 설치
 COPY requirements.txt .
+RUN pip install --no-cache-dir numpy==1.26.0 pandas==2.1.1
 RUN pip install --no-cache-dir -r requirements.txt
+
 
 # 애플리케이션 코드 복사
 COPY ./app /app/app

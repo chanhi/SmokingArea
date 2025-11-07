@@ -1,6 +1,11 @@
 fastapi==0.103.1
 uvicorn==0.23.2
 python-multipart==0.0.6
+sqlalchemy
+pandas==2.1.1
+numpy==1.26.0
+psycopg2-binary
+
 # GIS 관련 라이브러리 (필요시 주석 해제)
 # osmnx==1.2.1
 # geopandas==0.13.2

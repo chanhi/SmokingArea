@@ -1,9 +1,0 @@
-docker compose up --build
-
-docker exec -it coordinate_db psql -U Team_ten -d tabaco_retail
-
-\copy address (landlot_address, road_name_address, x, y)
-FROM '/docker-entrypoint-initdb.d/data/address.csv'
-WITH (FORMAT csv, HEADER true, DELIMITER ',');
-
-SELECT * FROM address LIMIT 5;
