@@ -13,7 +13,7 @@ from app.services.naver_api import get_coordinates_from_address
 
 
 # --- 설정 변수 ---
-DATABASE_URL = "postgresql://Team_ten:1234@db:5432/tabaco_retail"
+DATABASE_URL = "postgresql://Team_ten:1234040@db:5432/tabaco_retail"
 CSV_PATH = "/app/data/address.csv" # Docker 컨테이너 내부 경로
 
 
@@ -40,52 +40,32 @@ async def get_db():
 
 
 # --- address.csv → DB 로딩 함수 ---
-async def initialize_address_table():
-    """
-    애플리케이션 시작 시 address 테이블이 비어있으면 CSV 데이터를 삽입합니다.
-    """
+def initialize_address_table():
     try:
         print("🔍 address 테이블 상태 확인 중...")
-        
-        # inspect를 사용하여 테이블 존재 여부 확인
-        # 동기 작업을 비동기로 실행
-        table_exists = await asyncio.to_thread(
-            lambda: inspect(sync_engine).has_table("address")
-        )
+        engine = create_engine(DATABASE_URL)
 
-        if not table_exists:
-            print("⚙️ address 테이블이 존재하지 않습니다. 생성 후 CSV 데이터를 삽입합니다...")
-            # CSV 로드
-            df = await asyncio.to_thread(pd.read_csv, CSV_PATH)
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT COUNT(*) FROM address"))
+            count = result.scalar()
 
-            # 비어있는 문자열/null 값을 처리
-            df[['landlot_address', 'road_name_address']] = df[['landlot_address', 'road_name_address']].fillna("비어있음")
-            
-            # x, y 좌표가 비어 있으면 -1로 대체 (int/float 타입 호환을 위해)
-            if 'x' in df.columns:
-                df['x'] = df['x'].apply(lambda v: v if pd.notna(v) and v != '' else -1.0) # float으로 일관성 유지
-            if 'y' in df.columns:
-                df['y'] = df['y'].apply(lambda v: v if pd.notna(v) and v != '' else -1.0) # float으로 일관성 유지
+            if count == 0:
+                print("⚙️ address 테이블이 비어 있습니다. CSV 데이터를 삽입합니다...")
+                df = pd.read_csv(CSV_PATH)
+                ##비어있을 때 예외처리/ 비어 있는 문자열 값을 '비어있음'으로 채움
+                df[['landlot_address', 'road_name_address']] = df[['landlot_address', 'road_name_address']].fillna("비어있음")
+                # 좌표(x, y)가 비어 있으면 -1로 대체
+                if 'x' in df.columns and 'y' in df.columns:
+                    df['x'] = df['x'].apply(lambda v: v if pd.notna(v) and v != '' else -1.0)
+                    df['y'] = df['y'].apply(lambda v: v if pd.notna(v) and v != '' else -1.0)
+                ######### 좌표 변환 수행
 
-            # DataFrame을 SQL 테이블로 삽입 (append 모드)
-            # 동기 작업을 비동기로 실행
-            await asyncio.to_thread(
-                df.to_sql, 'address', con=sync_engine, if_exists='append', index=False
-            )
-            print("✅ CSV 데이터가 성공적으로 삽입되었습니다.")
-
-        else:
-            # 테이블이 존재하면 레코드 수 확인
-            # 동기 작업을 비동기로 실행
-            count = await asyncio.to_thread(
-                lambda: sync_engine.execute(text("SELECT COUNT(*) FROM address")).scalar()
-            )
-            print(f"✅ address 테이블에 {count}개의 레코드가 있습니다. 초기화 스킵.")
-
+                df.to_sql('address', con=engine, if_exists='append', index=False)
+                print("✅ CSV 데이터가 성공적으로 삽입되었습니다.")
+            else:
+                print(f"✅ address 테이블에 {count}개의 레코드가 있습니다. 초기화 스킵.")
     except Exception as e:
         print(f"❌ 초기화 중 오류 발생: {e}")
-        # 실제 운영 환경에서는 앱 시작 실패하도록 raise 할 수도 있음
-        # raise RuntimeError(f"Database initialization failed: {e}")
 
 async def fill_missing_coordinates():
     """
@@ -132,7 +112,7 @@ async def fill_missing_coordinates():
 async def lifespan(app: FastAPI):
     # 앱 시작 시 실행
     print("🚀 FastAPI 시작!")
-    await initialize_address_table()  # CSV 데이터 삽입 등
+    initialize_address_table()  # CSV 데이터 삽입 등
     asyncio.create_task(fill_missing_coordinates())  # 비어 있는 좌표 채우기
     yield
     # 앱 종료 시 실행
@@ -311,3 +291,19 @@ async def get_restricted_zones(db=Depends(get_db)):
             # 실제 폴리곤 데이터 (GeoJSON 형식)
         ]
     }
+
+
+from fastapi import APIRouter
+
+coordinates = APIRouter(prefix="/getcoordinates")
+
+@coordinates.get("/toORS")
+async def get_coordinates_to_ORS(db=Depends(get_db)):
+    query = text("SELECT x, y FROM address WHERE x != -1 AND y != -1")
+    rows = await asyncio.to_thread(lambda: db.execute(query).fetchall())
+    results = [{"x": row[0], "y": row[1]} for row in rows]
+    #results={"message:hello"}
+    return results
+
+
+app.include_router(coordinates)
