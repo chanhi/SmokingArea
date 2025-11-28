@@ -13,8 +13,9 @@ from app.services import db_service
 async def lifespan(app: FastAPI):
     # 앱 시작 시 실행
     print("🚀 FastAPI 시작!")
-    await asyncio.to_thread(db_service.initialize_address_table)  # CSV 데이터 삽입 등
-    asyncio.create_task(db_service.fill_missing_coordinates())  # 비어 있는 좌표 채우기
+    await asyncio.to_thread(db_service.initialize_address_table)  # address 테이블 채우기
+    await asyncio.create_task(db_service.fill_missing_coordinates())  # 비어 있는 좌표 채우기
+    await asyncio.to_thread(db_service.initialize_impossible_table) # impossible 테이블 채우기
     yield
     # 앱 종료 시 실행
     print("👋 FastAPI 종료!")

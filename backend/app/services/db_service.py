@@ -72,6 +72,39 @@ def initialize_address_table():
         print(f"❌ DB 초기화 중 오류 발생: {e}")
         traceback.print_exc()
 
+# --- impossible.csv → DB 로딩 함수 ---
+def initialize_impossible_table():
+    """
+    앱 시작 시 실행: 기존 impossible 테이블 삭제 후 impossible.csv 데이터를 DB에 적재합니다.
+    """
+    try:
+        print("🔄 DB 초기화 및 impossible 데이터 적재 작업을 시작합니다...")
+
+        # 1. CSV 로드
+        print(f"📂 CSV 파일 로드 중: {settings.IMPOSSIBLE_CSV_PATH}")
+        df = pd.read_csv(settings.IMPOSSIBLE_CSV_PATH)
+
+        # 2. DB에 저장 (테이블 새로 생성됨)
+        df.to_sql('impossible', con=sync_engine, if_exists='replace', index=False)
+        print("✅ 데이터 삽입 완료! (impossible 테이블 재생성됨)")
+
+        # 3. polygon_geom 컬럼을 geometry(Polygon, 4326) 타입으로 변환
+        with sync_engine.connect() as conn:
+            print("🛠 polygon_geom에 SRID(4326) 설정 중...")
+            conn.execute(text("""
+                ALTER TABLE impossible
+                    ALTER COLUMN polygon_geom TYPE geometry(Polygon, 4326)
+                    USING ST_SetSRID(polygon_geom::geometry, 4326);
+            """))
+            conn.commit()
+
+        print("🌍 SRID 4326 설정 완료!")
+
+    except Exception as e:
+        print(f"❌ DB 초기화 중 오류 발생: {e}")
+        traceback.print_exc()
+
+
 
 async def fill_missing_coordinates():
     """

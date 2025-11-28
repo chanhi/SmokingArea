@@ -1,8 +1,9 @@
 # app/api/coordinates.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 import asyncio
+import json
 
 from app.core.database import get_db
 from app.services.naver_api import get_coordinates_from_address
@@ -30,8 +31,52 @@ async def get_coordinates_to_ORS(db: Session = Depends(get_db)):
         # 에러 발생 시 빈 리스트 반환 또는 HTTPException 발생 고려
         return []
 
+
+@sub_router.get("/getPolygon")
+async def get_impossible_polygons(db: Session = Depends(get_db)):
+    """
+    DB의 impossible 테이블에 있는 모든 다각형 좌표(vertices) 반환
+    지도에 다각형 그리기용
+    """
+    try:
+        query = text("SELECT vertices FROM impossible")
+        rows = await asyncio.to_thread(lambda: db.execute(query).fetchall())
+        polygons = [json.loads(row[0]) for row in rows]
+        return {"polygons": polygons}
+    except Exception as e:
+        print(f"Error in get_impossible_polygons: {e}")
+        return {"polygons": []}
+
 # 서브 라우터를 메인 라우터에 포함시킴
 router.include_router(sub_router)
+
+
+@router.get("/checkImpossible")
+async def check_impossible(
+    x: float = Query(..., description="경도 (Longitude)"),
+    y: float = Query(..., description="위도 (Latitude)"),
+    db: Session = Depends(get_db)
+):
+    """
+    입력 좌표(x:경도, y:위도)가 DB의 impossible 다각형 중
+    하나라도 포함되는지 확인하여 boolean 반환
+    """
+    try:
+        query = text("""
+            SELECT EXISTS(
+                SELECT 1
+                FROM impossible
+                WHERE ST_Within(
+                    ST_SetSRID(ST_Point(:x, :y), 4326),
+                    polygon_geom
+                )
+            )
+        """)
+        result = await asyncio.to_thread(lambda: db.execute(query, {"x": x, "y": y}).scalar())
+        return {"is_inside": result}
+    except Exception as e:
+        print(f"Error in check_impossible: {e}")
+        return {"is_inside": False}
 
 @router.get("/geocode")
 async def geocode_address(db: Session = Depends(get_db)):
