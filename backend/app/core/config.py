@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://Team_ten:1234@db:5432/tabaco_retail")
     CSV_PATH: str = "/app/data/address.csv"
     ZONE_CSV_PATH: str = "/app/data/restricted_zone.csv"
+    IMPOSSIBLE_CSV_PATH: str = "/app/data/impossible.csv"
 
     # 네이버 API 설정
     NAVER_CLIENT_ID: str | None = os.getenv("NAVER_CLIENT_ID")

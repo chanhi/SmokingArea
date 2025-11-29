@@ -47,7 +47,7 @@ def convert_epsg5174_to_wgs84(x_5174, y_5174):
            math.isnan(lon_4326) or math.isinf(lon_4326):
             return None, None
 
-        return lat_4326, lon_4326 # (위도, 경도) 반환
+        return lon_4326, lat_4326 # (위도, 경도) 반환
     except Exception as e:
         print(f"좌표 변환 오류: {e}")
         return None, None

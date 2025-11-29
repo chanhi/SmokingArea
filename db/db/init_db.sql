@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS public.impossible (
   centroid_x DOUBLE PRECISION,
   centroid_y DOUBLE PRECISION,
   polygon_geom geometry(Polygon, 4326),
-  vertices JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  vertices JSONB
 );
 
 CREATE INDEX IF NOT EXISTS idx_impossible_geom ON public.impossible USING GIST (polygon_geom);
