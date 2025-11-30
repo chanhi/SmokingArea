@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # DB 설정
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://Team_ten:1234@db:5432/tabaco_retail")
+    DATABASE_URL: str | None = os.getenv("DATABASE_URL")
     CSV_PATH: str = "/app/data/address.csv"
     IMPOSSIBLE_CSV_PATH: str = "/app/data/impossible.csv"
 
