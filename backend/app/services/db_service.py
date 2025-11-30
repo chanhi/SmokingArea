@@ -91,7 +91,7 @@ def initialize_impossible_table():
 
         # 3. polygon_geom 컬럼을 geometry(Polygon, 4326) 타입으로 변환
         with sync_engine.connect() as conn:
-            print("🛠 polygon_geom에 SRID(4326) 설정 중...")
+            print("polygon_geom에 SRID(4326) 설정 중...")
             conn.execute(text("""
                 ALTER TABLE impossible
                     ALTER COLUMN polygon_geom TYPE geometry(Polygon, 4326)
