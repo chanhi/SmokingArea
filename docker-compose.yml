@@ -45,6 +45,8 @@ services:
     restart: always
     depends_on:
       - backend
+    env_file:
+      - ./frontend/.env
     ports:
       - "8080:5000"
     networks:

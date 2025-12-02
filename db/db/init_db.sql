@@ -15,7 +15,6 @@ CREATE INDEX IF NOT EXISTS idx_address_geom ON public.address USING GIST (geom);
 
 -- 3. impossible 테이블 생성
 CREATE TABLE IF NOT EXISTS public.impossible (
-  id SERIAL PRIMARY KEY,
   landlot_address VARCHAR(500) NOT NULL,
   centroid_x DOUBLE PRECISION,
   centroid_y DOUBLE PRECISION,

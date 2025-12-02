@@ -7,8 +7,8 @@ from flask import Flask, render_template, request, jsonify, Response
 app = Flask(__name__)
 
 # 환경 변수 로드
-NAVER_CLIENT_ID = os.environ.get('NAVER_MAP_CLIENT_ID')
-NAVER_CLIENT_SECRET = os.environ.get('NAVER_MAP_CLIENT_SECRET')
+NAVER_CLIENT_ID = os.environ.get('NAVER_CLIENT_ID')
+NAVER_CLIENT_SECRET = os.environ.get('NAVER_CLIENT_SECRET')
 
 # [신규] 위시리스트 데이터를 저장할 임시 메모리 저장소
 # (서버를 재시작하면 초기화됩니다. 영구 저장을 원하면 DB 연동이 필요합니다.)
