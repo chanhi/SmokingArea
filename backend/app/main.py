@@ -6,6 +6,7 @@ import asyncio
 from app.core.config import settings
 from app.api import building, coordinates, restricted_zone
 from app.services import db_service
+from fastapi.middleware.cors import CORSMiddleware
 
 
 # --- FastAPI 이벤트 훅 (앱 시작/종료 시 실행) ---
@@ -23,6 +24,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Tobacco Retailer Location API", lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],        # 모든 주소/포트에서의 접근을 허용합니다.
+    allow_credentials=True,
+    allow_methods=["*"],        # GET, POST, PUT, DELETE 등 모든 메서드 허용
+    allow_headers=["*"],        # 모든 헤더 허용
+)
+
 # --- 라우터 등록 ---
 app.include_router(building.router)
 app.include_router(coordinates.router)
@@ -33,6 +42,3 @@ app.include_router(restricted_zone.router)
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to Tobacco Retailer Location API!"}
-
-
-
