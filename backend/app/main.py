@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.api import building, coordinates, restricted_zone
 from app.services import db_service
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 
 # --- FastAPI 이벤트 훅 (앱 시작/종료 시 실행) ---
@@ -41,4 +42,6 @@ app.include_router(restricted_zone.router)
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to Tobacco Retailer Location API!"}
+
+
 
